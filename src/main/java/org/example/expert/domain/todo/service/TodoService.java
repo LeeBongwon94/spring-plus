@@ -5,6 +5,7 @@ import org.example.expert.client.WeatherClient;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
+import org.example.expert.domain.todo.dto.response.TodoDetailResponse;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
 import org.example.expert.domain.todo.entity.Todo;
@@ -93,5 +94,20 @@ public class TodoService {
                 todo.getCreatedAt(),
                 todo.getModifiedAt()
         );
+    }
+
+    public Page<TodoDetailResponse> getDetailTodos(int page, int size, String keyword, String startDate, String endDate, String manager) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        LocalDateTime formatStartDate =
+                (startDate != null) ? LocalDateTime.of(LocalDate.parse(startDate), LocalTime.MIN)
+                    : LocalDateTime.of(LocalDate.parse("1000-01-01"), LocalTime.MIN);
+
+        // LocalTime.MAX 값은 '23:59:59.9999999....' 이라서 그대로 사용하면 올림이 되어 00이 됨.
+        // withNano로 밀리세컨드 단위 지움
+        LocalDateTime formatEndDate =
+                (endDate != null) ? LocalDateTime.of(LocalDate.parse(endDate), LocalTime.MAX)
+                    : LocalDateTime.of(LocalDate.parse("9999-12-31"), LocalTime.MAX).withNano(0);
+
+        return todoRepository.findDetailRequest(keyword, formatStartDate, formatEndDate, manager, pageable);
     }
 }
